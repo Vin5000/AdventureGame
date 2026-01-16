@@ -1,0 +1,9 @@
+Project - Text-based Adventure game
+
+There will be events asking you what to do, like open a door? leave the item? and some Y/N prompts such as will you leave this area to no return? and the option to return to the optional items, you will also be able to recieve warnings that you cant proceed to the next level without getting all of the stuff
+
+A text based story, You start with a keycard, enter a Cave that leads to a underground laboratory. 
+
+**this is all so far, implement more as the class goes by**
+
+In the laboratory, find the research documents and escape the automated security system

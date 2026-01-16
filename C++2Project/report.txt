@@ -1,0 +1,10 @@
+ADVENTURE REPORT FOR: V
+
+Area                Time(min)   Security    Documents   
+--------------------------------------------------------
+--------------------------------------------------------
+Total areas explored: 0
+Total time spent: 0.00 minutes
+Average time per area: 0.00 minutes
+Documents found in 0 area(s).
+Security risk score: 6.67
