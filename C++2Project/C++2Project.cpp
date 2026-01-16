@@ -1,13 +1,10 @@
-// Text-based Adventure Game - Underground Laboratory
-// Meets: classes, structs, enums, arrays, menus, loops, validation, formatted output
-
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <fstream>
 using namespace std;
 
 // ========================= ENUM REQUIREMENT =========================
-// Difficulty level chosen once at the start.
 enum SecurityLevel {
     LOW = 1,
     MEDIUM,
@@ -15,43 +12,51 @@ enum SecurityLevel {
 };
 
 // ========================= STRUCT REQUIREMENT =========================
-// Represents one "location visit" in the adventure.
 struct Session {
     string areaName;
     bool foundDocuments;
 };
 
+// ========================= ARRAY PARAMETER FUNCTION =========================
+void printInventory(const string inv[], int count) {
+    for (int i = 0; i < count; i++) {
+        cout << "- " << inv[i] << "\n";
+    }
+}
+
 // ========================= CLASS REQUIREMENT =========================
 class AdventureGame {
 private:
-    // Struct array requirement
-    Session sessions[10];
+    // Constants to avoid magic numbers
+    static const int MAX_SESSIONS = 10;
+    static const int MAX_INVENTORY = 5;
+    static const int INPUT_IGNORE = 1000;
+
+    Session sessions[MAX_SESSIONS];
     int sessionCount;
 
-    // Inventory array requirement
-    string inventory[5];
+    string inventory[MAX_INVENTORY];
     int inventoryCount;
 
-    // Player info
     string playerName;
     SecurityLevel difficulty;
+    double missionTimeLimit; // third user input
 
-    // Current location state
-    string currentLocation; // "Outside", "Cave", "LabDoor", "Lab"
+    string currentLocation;
     bool missionComplete;
 
 public:
-    // Constructor initializes safe starting state
     AdventureGame() {
         sessionCount = 0;
         inventoryCount = 0;
         playerName = "Unknown";
         difficulty = LOW;
+        missionTimeLimit = 0.0;
         currentLocation = "Outside";
         missionComplete = false;
     }
-
-    // ========================= BANNER FUNCTION =========================
+    //
+    // ========================= BANNER =========================
     void displayBanner() const {
         cout << "=====================================================\n";
         cout << "      WELCOME TO THE UNDERGROUND LAB ADVENTURE       \n";
@@ -75,18 +80,24 @@ public:
         while (!(cin >> diffChoice) || diffChoice < 1 || diffChoice > 3) {
             cout << "Invalid choice. Enter 1, 2, or 3: ";
             cin.clear();
-            cin.ignore(1000, '\n');
+            cin.ignore(INPUT_IGNORE, '\n');
         }
         difficulty = static_cast<SecurityLevel>(diffChoice);
-        cin.ignore(1000, '\n');
 
-        // Starting inventory: keycard
+        cout << "Enter your mission time limit in minutes: ";
+        while (!(cin >> missionTimeLimit) || missionTimeLimit <= 0) {
+            cout << "Invalid. Enter a positive number: ";
+            cin.clear();
+            cin.ignore(INPUT_IGNORE, '\n');
+        }
+        cin.ignore(INPUT_IGNORE, '\n');
+
         inventory[inventoryCount++] = "Keycard";
 
         cout << "\nWelcome, " << playerName << ". Your keycard has been added to your inventory.\n\n";
     }
 
-    // ========================= INVENTORY HELPERS =========================
+    // ========================= HELPERS =========================
     bool hasItem(const string& item) const {
         for (int i = 0; i < inventoryCount; ++i) {
             if (inventory[i] == item) return true;
@@ -95,52 +106,76 @@ public:
     }
 
     void addSession(const string& areaName, bool foundDocs) {
-        if (sessionCount >= 10) return;
-        sessions[sessionCount].areaName = areaName;
-        sessions[sessionCount].foundDocuments = foundDocs;
-        sessionCount++;
+        if (sessionCount < MAX_SESSIONS) {
+            sessions[sessionCount].areaName = areaName;
+            sessions[sessionCount].foundDocuments = foundDocs;
+            sessionCount++;
+        }
     }
 
-    // ========================= REPORT REQUIREMENT =========================
-    void showReport() const {
-        cout << "\n==================== ADVENTURE SUMMARY ====================\n";
-        if (sessionCount == 0) {
-            cout << "No locations visited yet.\n\n";
+    // ========================= FILE OUTPUT =========================
+    void saveReportToFile() const {
+        ofstream out("report.txt");
+        if (!out) {
+            cout << "Error saving report.\n";
             return;
         }
 
+        out << "==================== ADVENTURE SUMMARY ====================\n";
+        out << left << setw(20) << "Area" << setw(15) << "Documents" << "\n";
+        out << string(35, '-') << "\n";
+
+        int docsCount = 0;
+        for (int i = 0; i < sessionCount; i++) {
+            out << left << setw(20) << sessions[i].areaName
+                << setw(15) << (sessions[i].foundDocuments ? "Found" : "None") << "\n";
+            if (sessions[i].foundDocuments) docsCount++;
+        }
+
+        double percentAreasVisited = (sessionCount / static_cast<double>(MAX_SESSIONS)) * 100.0;
+
+        out << string(35, '-') << "\n";
+        out << "Total locations visited: " << sessionCount << "\n";
+        out << "Total document finds:    " << docsCount << "\n";
+        out << "Percent of map explored: " << percentAreasVisited << "%\n";
+        out << "Mission time limit:      " << missionTimeLimit << " minutes\n";
+
+        out.close();
+        cout << "Report saved to report.txt\n\n";
+    }
+
+    // ========================= REPORT =========================
+    void showReport() const {
+        cout << "\n==================== ADVENTURE SUMMARY ====================\n";
+
         cout << left << setw(20) << "Area"
-            << setw(15) << "Documents"
-            << "\n";
+            << setw(15) << "Documents" << "\n";
         cout << string(35, '-') << "\n";
 
         int docsCount = 0;
         for (int i = 0; i < sessionCount; ++i) {
             cout << left << setw(20) << sessions[i].areaName
-                << setw(15) << (sessions[i].foundDocuments ? "Found" : "None")
-                << "\n";
+                << setw(15) << (sessions[i].foundDocuments ? "Found" : "None") << "\n";
             if (sessions[i].foundDocuments) docsCount++;
         }
 
+        double percentAreasVisited = (sessionCount / static_cast<double>(MAX_SESSIONS)) * 100.0;
+
         cout << string(35, '-') << "\n";
         cout << "Total locations visited: " << sessionCount << "\n";
-        cout << "Total document finds:    " << docsCount << "\n\n";
+        cout << "Total document finds:    " << docsCount << "\n";
+        cout << "Percent of map explored: " << percentAreasVisited << "%\n";
+        cout << "Mission time limit:      " << missionTimeLimit << " minutes\n\n";
     }
 
-    // ========================= INVENTORY DISPLAY =========================
+    // ========================= INVENTORY =========================
     void showInventory() const {
         cout << "\n--- Inventory ---\n";
-        if (inventoryCount == 0) {
-            cout << "(Empty)\n\n";
-            return;
-        }
-        for (int i = 0; i < inventoryCount; ++i) {
-            cout << "- " << inventory[i] << "\n";
-        }
+        printInventory(inventory, inventoryCount);
         cout << "\n";
     }
 
-    // ========================= LOCATION MENUS =========================
+    // ========================= MENUS =========================
     void outsideMenu() {
         int choice;
         do {
@@ -148,20 +183,21 @@ public:
             cout << "1. Enter the cave\n";
             cout << "2. View inventory\n";
             cout << "3. View summary report\n";
-            cout << "4. Quit\n";
+            cout << "4. Save report to file\n";
+            cout << "5. Quit\n";
             cout << "Enter choice: ";
 
             while (!(cin >> choice)) {
-                cout << "Invalid input. Enter 1-4: ";
+                cout << "Invalid input. Enter 1-5: ";
                 cin.clear();
-                cin.ignore(1000, '\n');
+                cin.ignore(INPUT_IGNORE, '\n');
             }
-            cin.ignore(1000, '\n');
+            cin.ignore(INPUT_IGNORE, '\n');
 
             switch (choice) {
             case 1:
                 currentLocation = "Cave";
-                addSession("Entrance Cave", false); // Entrance cave has no documents
+                addSession("Entrance Cave", false);
                 caveMenu();
                 break;
             case 2:
@@ -171,37 +207,41 @@ public:
                 showReport();
                 break;
             case 4:
+                saveReportToFile();
+                break;
+            case 5:
                 cout << "Exiting game. Goodbye, " << playerName << ".\n";
                 return;
             default:
                 cout << "Invalid choice.\n\n";
             }
 
-        } while (choice != 4);
+        } while (true);
     }
 
     void caveMenu() {
         int choice;
         do {
             cout << "==================== INSIDE THE CAVE ====================\n";
-            cout << "1. Leave cave (go outside)\n";
+            cout << "1. Leave cave\n";
             cout << "2. Go to lab door\n";
             cout << "3. View inventory\n";
             cout << "4. View summary report\n";
-            cout << "5. Quit\n";
+            cout << "5. Save report to file\n";
+            cout << "6. Quit\n";
             cout << "Enter choice: ";
 
             while (!(cin >> choice)) {
-                cout << "Invalid input. Enter 1-5: ";
+                cout << "Invalid input. Enter 1-6: ";
                 cin.clear();
-                cin.ignore(1000, '\n');
+                cin.ignore(INPUT_IGNORE, '\n');
             }
-            cin.ignore(1000, '\n');
+            cin.ignore(INPUT_IGNORE, '\n');
 
             switch (choice) {
             case 1:
                 currentLocation = "Outside";
-                return; // back to outsideMenu
+                return;
             case 2:
                 currentLocation = "LabDoor";
                 addSession("Lab Door", false);
@@ -214,7 +254,10 @@ public:
                 showReport();
                 break;
             case 5:
-                cout << "Exiting game. Goodbye, " << playerName << ".\n";
+                saveReportToFile();
+                break;
+            case 6:
+                cout << "Exiting game.\n";
                 exit(0);
             default:
                 cout << "Invalid choice.\n\n";
@@ -231,15 +274,16 @@ public:
             cout << "2. Return to cave\n";
             cout << "3. View inventory\n";
             cout << "4. View summary report\n";
-            cout << "5. Quit\n";
+            cout << "5. Save report to file\n";
+            cout << "6. Quit\n";
             cout << "Enter choice: ";
 
             while (!(cin >> choice)) {
-                cout << "Invalid input. Enter 1-5: ";
+                cout << "Invalid input. Enter 1-6: ";
                 cin.clear();
-                cin.ignore(1000, '\n');
+                cin.ignore(INPUT_IGNORE, '\n');
             }
-            cin.ignore(1000, '\n');
+            cin.ignore(INPUT_IGNORE, '\n');
 
             switch (choice) {
             case 1:
@@ -251,12 +295,12 @@ public:
                     return;
                 }
                 else {
-                    cout << "You do not have the keycard. You cannot enter.\n\n";
+                    cout << "You do not have the keycard.\n\n";
                 }
                 break;
             case 2:
                 currentLocation = "Cave";
-                return; // back to caveMenu
+                return;
             case 3:
                 showInventory();
                 break;
@@ -264,7 +308,10 @@ public:
                 showReport();
                 break;
             case 5:
-                cout << "Exiting game. Goodbye, " << playerName << ".\n";
+                saveReportToFile();
+                break;
+            case 6:
+                cout << "Exiting game.\n";
                 exit(0);
             default:
                 cout << "Invalid choice.\n\n";
@@ -280,20 +327,20 @@ public:
             cout << "1. Search for documents\n";
             cout << "2. View inventory\n";
             cout << "3. View summary report\n";
-            cout << "4. Quit\n";
+            cout << "4. Save report to file\n";
+            cout << "5. Quit\n";
             cout << "Enter choice: ";
 
             while (!(cin >> choice)) {
-                cout << "Invalid input. Enter 1-4: ";
+                cout << "Invalid input. Enter 1-5: ";
                 cin.clear();
-                cin.ignore(1000, '\n');
+                cin.ignore(INPUT_IGNORE, '\n');
             }
-            cin.ignore(1000, '\n');
+            cin.ignore(INPUT_IGNORE, '\n');
 
             switch (choice) {
             case 1:
                 searchForDocuments();
-                // After mission complete, return to outside main menu
                 currentLocation = "Outside";
                 return;
             case 2:
@@ -303,7 +350,10 @@ public:
                 showReport();
                 break;
             case 4:
-                cout << "Exiting game. Goodbye, " << playerName << ".\n";
+                saveReportToFile();
+                break;
+            case 5:
+                cout << "Exiting game.\n";
                 exit(0);
             default:
                 cout << "Invalid choice.\n\n";
@@ -321,13 +371,15 @@ public:
 
         cout << "You search the lab thoroughly...\n";
         cout << "You find the classified research documents!\n";
-        if (inventoryCount < 5) {
+
+        if (inventoryCount < MAX_INVENTORY) {
             inventory[inventoryCount++] = "Research Documents";
         }
-        // Mark last session as having documents
+
         if (sessionCount > 0) {
             sessions[sessionCount - 1].foundDocuments = true;
         }
+
         missionComplete = true;
 
         cout << "\n==================== MISSION COMPLETE ====================\n";
@@ -348,4 +400,3 @@ int main() {
     AdventureGame game;
     game.run();
     return 0;
-}

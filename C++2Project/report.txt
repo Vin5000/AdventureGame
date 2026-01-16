@@ -1,10 +1,11 @@
-ADVENTURE REPORT FOR: V
-
-Area                Time(min)   Security    Documents   
---------------------------------------------------------
---------------------------------------------------------
-Total areas explored: 0
-Total time spent: 0.00 minutes
-Average time per area: 0.00 minutes
-Documents found in 0 area(s).
-Security risk score: 6.67
+==================== ADVENTURE SUMMARY ====================
+Area                Documents      
+-----------------------------------
+Entrance Cave       None           
+Lab Door            None           
+Laboratory          Found          
+-----------------------------------
+Total locations visited: 3
+Total document finds:    1
+Percent of map explored: 30%
+Mission time limit:      40 minutes
